@@ -10,7 +10,7 @@ body {
 }
 
 text {
-  font: 10px sans-serif;
+  font: 16px sans-serif;
 }
 
 form {
@@ -19,20 +19,45 @@ form {
   top: 10px;
 }
 
-.legend {                                                   /* NEW */
-  font-size: 12px;                                          /* NEW */
-}                                                           /* NEW */
-rect {                                                      /* NEW */
-  stroke-width: 2;                                          /* NEW */
-}   
+.radioButtons{
+    position: absolute;
+    top: 90px;
+    right: 10px;
+    width: 175px;
+    height: 175px;
+    border: 3px solid #73AD21;
+}
 
+.title{
+  position: absolute;
+  right: 200px;
+}
+
+.mychart
+{
+  position:absolute;
+  top: 100px;
+}
+  
 </style>
+
+<div class = "title">
+  <h1>My Daily Activity vs Artist and Mood</h1>
+</div> 
+<div class = "mychart">
+<div class = "radioButtons" >
 <form>
+  <p>Click Activity to View</p>
   <label><input type="radio" name="dataset" value="ready" checked> Getting Ready</label>
+  <br>
   <label><input type="radio" name="dataset" value="hw"> School Work </label>
+  <br>
   <label><input type="radio" name="dataset" value="walking"> Walking to Class </label>
+  <br>
   <label><input type="radio" name="dataset" value="driving"> Driving </label>
+
 </form>
+</div> 
 <script src="//d3js.org/d3.v3.min.js"></script>
 
 <script>
@@ -58,11 +83,25 @@ var arc = d3.svg.arc()
     .innerRadius(0)
     .outerRadius(radius-40);
 
-var svg = d3.select("body").append("svg")
+
+var svg = d3.select("body").select("div.mychart").append("svg")
     .attr("width", width)
     .attr("height", height)
   .append("g")
     .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+var tooltip = d3.select('#chart')                               // NEW
+      .append('div')                                                // NEW
+      .attr('class', 'tooltip');                                    // NEW
+
+    tooltip.append('div')                                           // NEW
+      .attr('class', 'label');                                      // NEW
+
+    tooltip.append('div')                                           // NEW
+      .attr('class', 'count');                                      // NEW
+
+    tooltip.append('div')                                           // NEW
+      .attr('class', 'percent');                                    // NEW
 
 d3.tsv("data.tsv", function(error, data) {
   var path = svg.datum(data).selectAll("path")
@@ -87,6 +126,38 @@ d3.tsv("data.tsv", function(error, data) {
     path = path.data(pie); // compute the new angles
     path.attr("d", arc); // redraw the arcs
   }
+////////////////////
+  var legend = svg.selectAll('.legend')                     
+    .data(color.domain())                                   
+    .enter()                                                
+    .append('g')                                           
+    .attr('class', 'legend')                                
+    .attr('transform', function(d, i) {                     
+      var height = legendRectSize + legendSpacing;          
+      var offset =  height * color.domain().length / 2;     
+      var horz = -25 * legendRectSize;                      
+      var vert = i * height - offset;                       
+      return 'translate(' + horz + ',' + vert + ')';        
+    });                                                     
+
+  legend.append('rect')                                     
+    .attr('width', legendRectSize)                          
+    .attr('height', legendRectSize)                         
+    .style('fill', color)                                   
+    .style('stroke', color);                                
+
+
+  var numbers = [ "Drake", "Future", "Dr.Srimix", "J. Cole", "Kanye West", "Jay Z", "A$AP Rocky", "The Notorious B.I.G.", "Wiz Khalifa", "Other" ];
+  legend.append('text')                                     
+    .attr('x', legendRectSize + legendSpacing)              
+    .attr('y', legendRectSize - legendSpacing)
+    .attr('font-size', "16px")              
+    .text(function(d) 
+      { 
+        return  numbers[d]; 
+      });                       // NEW
+
+///////////////////
 });
 
 /*function type(d) {
@@ -97,4 +168,5 @@ d3.tsv("data.tsv", function(error, data) {
 
 
 </script>
+</div> 
 
