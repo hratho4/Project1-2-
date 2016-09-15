@@ -3,14 +3,9 @@
 <style>
 
 body {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   margin: auto;
   position: relative;
   width: 960px;
-}
-
-text {
-  font: 16px sans-serif;
 }
 
 form {
@@ -25,12 +20,12 @@ form {
     right: 10px;
     width: 175px;
     height: 175px;
-    border: 3px solid #73AD21;
+    border: 4px solid #73AD21;
 }
 
 .title{
   position: absolute;
-  right: 200px;
+  right: 215px;
 }
 
 .mychart
@@ -38,51 +33,90 @@ form {
   position:absolute;
   top: 100px;
 }
-  
+
+.chart2{
+  position:absolute;
+  top: 175px;
+  left: 305px;
+}
+
+.arc text
+{
+  font: 10px;
+  text-anchor: middle;
+}
+
+.arc path {
+  stroke: #fff;
+}
 </style>
 
 <div class = "title">
   <h1>My Daily Activity vs Artist and Mood</h1>
 </div> 
+
 <div class = "mychart">
+<!-- The outer pie chart will go inside this div element-->
+</div>
+
+<!--Radio buttons for different activities-->
 <div class = "radioButtons" >
 <form>
   <p>Click Activity to View</p>
-  <label><input type="radio" name="dataset" value="ready" checked> Getting Ready</label>
+  <label><input type="radio" id="first" name="dataset" value="ready" checked> Getting Ready</label>
   <br>
-  <label><input type="radio" name="dataset" value="hw"> School Work </label>
+  <label><input type="radio" id="second" name="dataset" value="hw"> School Work </label>
   <br>
-  <label><input type="radio" name="dataset" value="walking"> Walking to Class </label>
+  <label><input type="radio" id="third" name="dataset" value="walking"> Walking to Class </label>
   <br>
-  <label><input type="radio" name="dataset" value="driving"> Driving </label>
-
+  <label><input type="radio" id="fourth" name="dataset" value="driving"> Driving </label>
 </form>
 </div> 
+
+
+<div class ="chart2">
+  <!--the inner chart will go inside this element-->
+</div>
+
+<!--Importing the d3.js library from the d3.js website-->
 <script src="//d3js.org/d3.v3.min.js"></script>
+
 
 <script>
 
-var legendRectSize = 18;                                  // NEW
-var legendSpacing = 4;                                    // NEW
+var legendSize = 18;                               
+var legendSpace = 4;
 
-//set width, height, and radius of the pie chart 
+//set width, height, and radius for the outer pie chart 
 var width = 960,
     height = 500,
     radius = Math.min(width, height) / 2;
 
-//array of colors
+//set width, height, and radius for the inner pie chart
+var width2 = 350,
+    height2 = 350,
+    radius2 = Math.min(width2, height2) / 2; 
+
+
+//array of colors for the Outer Pie Chart from the d3.js predefined list of colors
 var color = d3.scale.category10();
 
-//create the pie chart layout 
-var pie = d3.layout.pie()
-    .value(function(d) { return d.ready; })
-    .sort(null);
+//array of colors for the Inner Pie Chart that I defined.
+var color2 = ["#0000FF", "#4B4BFF" , "#8A8AF4", "#B0B0F2",
+              "#FF5100", "#FE6E2B" , "#F18755", "#F6A57E",
+              "#009304", "#01D507" , "#48FE4D", "#72F175",
+              "#29C5FA", "#F56B6B" , "#F5F27A", "#8DF57A",
+              "#29C5FA", "#F56B6B" , "#F5F27A", "#8DF57A",
+              "#29C5FA", "#F56B6B" , "#F5F27A", "#8DF57A",
+              "#29C5FA", "#F56B6B" , "#F5F27A", "#8DF57A",
+              "#29C5FA", "#F56B6B" , "#F5F27A", "#8DF57A",
+              "#29C5FA", "#F56B6B" , "#F5F27A", "#8DF57A",
+              "#29C5FA", "#F56B6B" , "#F5F27A", "#8DF57A"]; 
 
 
-var arc = d3.svg.arc()
-    .innerRadius(0)
-    .outerRadius(radius-40);
-
+//create the outer pie chart layout 
+var pie = d3.layout.pie().value(function(d) { return d.ready; }).sort(null);
+var arc = d3.svg.arc().innerRadius(radius-100).outerRadius(radius-40);
 
 var svg = d3.select("body").select("div.mychart").append("svg")
     .attr("width", width)
@@ -90,83 +124,107 @@ var svg = d3.select("body").select("div.mychart").append("svg")
   .append("g")
     .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
-var tooltip = d3.select('#chart')                               // NEW
-      .append('div')                                                // NEW
-      .attr('class', 'tooltip');                                    // NEW
+//funtion for updating the inner pie chart called when the outer pie chart is updated
+function update(value)
+{
+  chartsecond(value);
+}
 
-    tooltip.append('div')                                           // NEW
-      .attr('class', 'label');                                      // NEW
-
-    tooltip.append('div')                                           // NEW
-      .attr('class', 'count');                                      // NEW
-
-    tooltip.append('div')                                           // NEW
-      .attr('class', 'percent');                                    // NEW
-
+//Gather data from data.tsv file and create the outer pie chart
 d3.tsv("data.tsv", function(error, data) {
-  var path = svg.datum(data).selectAll("path")
-      .data(pie)
+
+//gets the data and fills in the chart
+var path = svg.selectAll("path")
+      .data(pie(data))
     .enter().append("path")
       .attr("fill", function(d, i) { return color(i); })
-      .attr("d", arc);
+      .attr("d", arc).each(function(d) { this._current = d; });
 
-  d3.selectAll("input")
+//Checks for input changed by the user and calls the change function
+d3.selectAll("input")
       .on("change", change);
 
-  var timeout = setTimeout(function() {
-    d3.select("input[value=\"hw\"]").property("checked", true).each(change);
-    d3.select("input[value=\"walking\"]").property("checked", true).each(change);
-    d3.select("input[value=\"driving\"]").property("checked", true).each(change);
-  }, 2000);
-
-  function change() {
+//updates the outer chart 
+function change() {
     var value = this.value;
-    clearTimeout(timeout);
+    //clearTimeout(timeout);
     pie.value(function(d) { return d[value]; }); // change the value function
-    path = path.data(pie); // compute the new angles
+    path = path.data(pie(data)); // compute the new angles
     path.attr("d", arc); // redraw the arcs
-  }
-////////////////////
-  var legend = svg.selectAll('.legend')                     
+    update(value);
+}
+
+//Added the legend to the first div element 
+var legend = svg.selectAll('.legend')                     
     .data(color.domain())                                   
     .enter()                                                
     .append('g')                                           
     .attr('class', 'legend')                                
     .attr('transform', function(d, i) {                     
-      var height = legendRectSize + legendSpacing;          
+      var height = legendSize + legendSpace;          
       var offset =  height * color.domain().length / 2;     
-      var horz = -25 * legendRectSize;                      
+      var horz = -25 * legendSize;                      
       var vert = i * height - offset;                       
       return 'translate(' + horz + ',' + vert + ')';        
-    });                                                     
+    });
 
-  legend.append('rect')                                     
-    .attr('width', legendRectSize)                          
-    .attr('height', legendRectSize)                         
-    .style('fill', color)                                   
+    legend.append('rect')
+    .attr('width', legendSize)
+    .attr('height', legendSize)
+    .style('fill', color)
     .style('stroke', color);                                
 
 
-  var numbers = [ "Drake", "Future", "Dr.Srimix", "J. Cole", "Kanye West", "Jay Z", "A$AP Rocky", "The Notorious B.I.G.", "Wiz Khalifa", "Other" ];
+var artist = [ "Drake", "Future", "Dr.Srimix", "J. Cole", "Kanye West", "Jay Z", "A$AP Rocky", "The Notorious B.I.G.", "Wiz Khalifa", "Other" ];
+
   legend.append('text')                                     
-    .attr('x', legendRectSize + legendSpacing)              
-    .attr('y', legendRectSize - legendSpacing)
+    .attr('x', legendSize + legendSpace)              
+    .attr('y', legendSize - legendSpace)
     .attr('font-size', "16px")              
     .text(function(d) 
       { 
-        return  numbers[d]; 
-      });                       // NEW
-
-///////////////////
+        return  artist[d]; 
+      });                   
 });
 
-/*function type(d) {
-  //d.ready = +d.ready;
-  //d.hw = +d.hw;
-  return d;
-}*/
+//inner pie chart
+var pie2 = d3.layout.pie()
+    .value(function(d) { return d.ready; })
+    .sort(null);
 
+var arc2 = d3.svg.arc().innerRadius(0).outerRadius(radius2-25);
+
+//new svg for the inner pie chart
+var svg2 = d3.select("body").select("div.chart2").append("svg")
+    .attr("width", width2)
+    .attr("height", height2)
+  .append("g")
+    .attr("transform", "translate(" + width2 / 2 + "," + height2 / 2 + ")");
+
+//fill data on the inner chart
+d3.tsv("data2.tsv", function(error, data) {
+    var path2 = svg2.datum(data).selectAll("path")
+    .data(pie(data))
+    .enter().append("path")
+    .attr("fill", function(d, i) { return color2[i]; })
+    .attr("d", arc2).each(function(d) { this._current = d; }); 
+  
+  function chartsecond(value)
+  { 
+    var val = value;
+    pie.value(function(d) { return d[value]; }); // change the value function
+    path2 = path2.data(pie(data)); // compute the new angles
+    path2.attr("d", arc); // redraw the arcs
+  }
+
+});
+
+//
+/*var to = setTimeout(function() {
+    d3.select("input[value=\"hw\"]").property("checked", true).each(change);
+    d3.select("input[value=\"walking\"]").property("checked", true).each(change);
+    d3.select("input[value=\"driving\"]").property("checked", true).each(change);
+  }, 20);*/
 
 </script>
-</div> 
 
